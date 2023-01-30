@@ -82,6 +82,10 @@
 	remove_from_storage(W, null, user)
 	return W
 
+/obj/item/storage/holster/vendor_equip(mob/user)
+	..()
+	return user.equip_to_appropriate_slot(src)
+
 //backpack type holster items
 /obj/item/storage/holster/backholster
 	name = "backpack holster"
@@ -168,6 +172,15 @@
 	new /obj/item/ammo_magazine/rocket/som/incendiary(src)
 	new /obj/item/ammo_magazine/rocket/som/incendiary(src)
 	new /obj/item/ammo_magazine/rocket/som/rad(src)
+	new /obj/item/ammo_magazine/rocket/som/rad(src)
+	var/obj/item/new_item = new /obj/item/weapon/gun/launcher/rocket/som/rad(src)
+	INVOKE_ASYNC(src, .proc/handle_item_insertion, new_item)
+
+/obj/item/storage/holster/backholster/rpg/som/ert/Initialize()
+	. = ..()
+	new /obj/item/ammo_magazine/rocket/som/thermobaric(src)
+	new /obj/item/ammo_magazine/rocket/som/thermobaric(src)
+	new /obj/item/ammo_magazine/rocket/som/heat(src)
 	new /obj/item/ammo_magazine/rocket/som/rad(src)
 	var/obj/item/new_item = new /obj/item/weapon/gun/launcher/rocket/som/rad(src)
 	INVOKE_ASYNC(src, .proc/handle_item_insertion, new_item)
