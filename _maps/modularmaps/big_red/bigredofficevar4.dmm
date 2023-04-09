@@ -182,7 +182,7 @@
 /area/bigredv2/outside/office_complex)
 "gP" = (
 /obj/effect/landmark/weed_node,
-/turf/open/floor/plating/ground/mars/dirttosand,
+/turf/open/floor/plating/ground/mars/dirttosand/autosmooth,
 /area/bigredv2/outside/c)
 "gW" = (
 /obj/effect/decal/cleanable/dirt,
@@ -209,7 +209,7 @@
 /area/bigredv2/outside/office_complex)
 "hE" = (
 /obj/structure/table,
-/obj/item/multitool,
+/obj/item/tool/multitool,
 /turf/open/floor/tile/dark,
 /area/bigredv2/outside/office_complex)
 "hL" = (
@@ -403,7 +403,7 @@
 /turf/open/floor/tile/white,
 /area/bigredv2/outside/office_complex)
 "pO" = (
-/turf/open/floor/plating/ground/mars/dirttosand,
+/turf/open/floor/plating/ground/mars/dirttosand/autosmooth,
 /area/bigredv2/outside/c)
 "pV" = (
 /obj/machinery/atmospherics/pipe/simple/green/hidden{
@@ -632,7 +632,7 @@
 /turf/open/floor/grimy,
 /area/bigredv2/outside/office_complex)
 "xY" = (
-/turf/open/floor/plating/ground/mars/dirttosand{
+/turf/open/floor/plating/ground/mars/dirttosand/autosmooth{
 	dir = 6
 	},
 /area/bigredv2/outside/c)
@@ -1005,8 +1005,8 @@
 "Lv" = (
 /obj/machinery/atmospherics/pipe/simple/green/hidden,
 /obj/effect/decal/cleanable/dirt,
-/obj/item/folder/red,
 /obj/item/ammo_casing/bullet,
+/obj/effect/spawner/random/folder,
 /turf/open/floor,
 /area/bigredv2/outside/office_complex)
 "LF" = (
@@ -1264,7 +1264,7 @@
 /turf/open/floor/tile/white,
 /area/bigredv2/outside/office_complex)
 "Vh" = (
-/turf/open/floor/plating/ground/mars/dirttosand{
+/turf/open/floor/plating/ground/mars/dirttosand/autosmooth{
 	dir = 1
 	},
 /area/bigredv2/outside/e)
@@ -1386,7 +1386,7 @@
 /turf/closed/wall,
 /area/bigredv2/outside/office_complex)
 "ZQ" = (
-/obj/machinery/autolathe,
+/obj/machinery/prop/autolathe,
 /turf/open/floor/tile/white,
 /area/bigredv2/outside/office_complex)
 

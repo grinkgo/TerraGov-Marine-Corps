@@ -73,7 +73,7 @@
 		/obj/item/toy/bikehorn,
 		/obj/item/clothing/tie/horrible,
 		/obj/item/toy/spinningtoy,
-		/obj/item/toy/sword,
+		/obj/item/toy/katana,
 		/obj/item/weapon/banhammer,
 	)
 
@@ -153,7 +153,7 @@
 //Alien supply drop, how'd they get a bluespace teleporter?
 /obj/effect/supply_drop/xenomorph/Initialize()
 	. = ..()
-	addtimer(CALLBACK(src, .proc/spawn_larva), 1)
+	addtimer(CALLBACK(src, PROC_REF(spawn_larva)), 1)
 
 /obj/effect/supply_drop/xenomorph/proc/spawn_larva()
 	var/mob/picked = get_alien_candidate()
@@ -233,7 +233,7 @@
 /obj/effect/supply_drop/armor_upgrades/Initialize()
 	. = ..()
 	new /obj/item/clothing/suit/modular/xenonauten/heavy/tyr_two(loc)
-	new /obj/item/clothing/head/modular/marine/m10x/tyr(loc)
+	new /obj/item/clothing/head/modular/m10x/tyr(loc)
 	new /obj/item/weapon/shield/riot/marine(loc)
 	return INITIALIZE_HINT_QDEL
 
@@ -344,7 +344,7 @@
 /obj/effect/supply_drop/som_rpg/Initialize()
 	. = ..()
 	new /obj/item/storage/holster/backholster/rpg/som/war_crimes(loc)
-	new /obj/item/clothing/head/modular/som/mithridatius(loc)
+	new /obj/item/clothing/head/modular/som/bio(loc)
 	new /obj/item/clothing/suit/modular/som/heavy/mithridatius(loc)
 	return INITIALIZE_HINT_QDEL
 
@@ -358,7 +358,7 @@
 
 /obj/effect/supply_drop/som_armor_upgrades/Initialize()
 	. = ..()
-	new /obj/item/clothing/head/modular/som/veteran/lorica(loc)
+	new /obj/item/clothing/head/modular/som/lorica(loc)
 	new /obj/item/clothing/suit/modular/som/heavy/lorica(loc)
 	new /obj/item/weapon/shield/riot/marine/som(loc)
 	return INITIALIZE_HINT_QDEL
