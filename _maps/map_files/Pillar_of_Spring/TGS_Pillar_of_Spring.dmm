@@ -326,9 +326,9 @@
 /area/mainship/medical/lower_medical)
 "axo" = (
 /obj/machinery/door_display/research_cell/cell{
-	dir = 1
+	pixel_y = 2
 	},
-/turf/open/floor/mainship/sterile/dark,
+/turf/closed/wall/mainship/white,
 /area/mainship/medical/medical_science)
 "axA" = (
 /obj/structure/cable,
@@ -2594,13 +2594,6 @@
 /obj/item/tool/pen,
 /turf/open/floor/mainship/floor,
 /area/mainship/living/briefing)
-"dig" = (
-/obj/machinery/status_display{
-	pixel_x = 15
-	},
-/obj/effect/soundplayer,
-/turf/closed/wall/mainship,
-/area/mainship/living/briefing)
 "dit" = (
 /obj/machinery/telecomms/server/presets/engineering,
 /turf/open/floor/mainship/tcomms,
@@ -3447,6 +3440,16 @@
 /obj/structure/noticeboard,
 /turf/closed/wall/mainship,
 /area/mainship/squads/general)
+"ekM" = (
+/obj/structure/table/mainship/nometal,
+/obj/item/radio,
+/obj/item/light_bulb/tube,
+/obj/item/light_bulb/tube,
+/obj/item/light_bulb/tube,
+/obj/item/clothing/glasses/meson,
+/obj/item/clothing/gloves/insulated,
+/turf/open/floor/mainship/mono,
+/area/mainship/engineering/engineering_workshop)
 "ekT" = (
 /turf/open/floor/mainship/green{
 	dir = 8
@@ -7151,16 +7154,6 @@
 	},
 /turf/open/floor/mainship/sterile/plain,
 /area/mainship/living/tankerbunks)
-"juG" = (
-/obj/structure/table/mainship/nometal,
-/obj/item/radio,
-/obj/item/light_bulb/tube,
-/obj/item/light_bulb/tube,
-/obj/item/light_bulb/tube,
-/obj/item/clothing/glasses/meson,
-/obj/item/clothing/gloves/yellow,
-/turf/open/floor/mainship/mono,
-/area/mainship/engineering/engineering_workshop)
 "jwr" = (
 /obj/machinery/door/airlock/mainship/engineering/CSEoffice{
 	dir = 2
@@ -10064,6 +10057,10 @@
 "mTs" = (
 /turf/open/floor/mainship/sterile/dark,
 /area/crew_quarters/toilet)
+"mTH" = (
+/obj/machinery/marine_selector/gear/commander,
+/turf/open/floor/wood,
+/area/mainship/living/numbertwobunks)
 "mUU" = (
 /obj/machinery/light/mainship,
 /obj/structure/sink{
@@ -10337,7 +10334,6 @@
 "nkX" = (
 /obj/machinery/optable,
 /obj/item/tank/anesthetic,
-/obj/item/tank/anesthetic,
 /turf/open/floor/mainship/sterile/side{
 	dir = 8
 	},
@@ -10413,21 +10409,6 @@
 /obj/effect/soundplayer,
 /turf/closed/wall/mainship/white,
 /area/mainship/medical/lower_medical)
-"ntN" = (
-/obj/machinery/power/apc/mainship/hardened{
-	dir = 8
-	},
-/obj/structure/cable,
-/obj/effect/turf_decal/warning_stripes/thin{
-	dir = 4
-	},
-/turf/open/floor/mainship/black{
-	dir = 8
-	},
-/turf/open/floor/mainship/cargo/arrow{
-	dir = 4
-	},
-/area/mainship/command/self_destruct)
 "nuj" = (
 /obj/machinery/marine_selector/gear/medic,
 /turf/open/floor/mainship,
@@ -10499,6 +10480,13 @@
 /obj/structure/cable,
 /turf/open/floor/mainship/mono,
 /area/mainship/engineering/engineering_workshop)
+"nyw" = (
+/obj/machinery/door/firedoor/mainship,
+/obj/machinery/light/mainship{
+	dir = 1
+	},
+/turf/open/floor/mainship/stripesquare,
+/area/mainship/hallways/port_hallway)
 "nyy" = (
 /obj/effect/soundplayer,
 /obj/structure/sign/science,
@@ -11118,9 +11106,7 @@
 	},
 /area/mainship/living/briefing)
 "orC" = (
-/obj/machinery/status_display{
-	pixel_x = -15
-	},
+/obj/machinery/status_display,
 /obj/effect/soundplayer,
 /turf/closed/wall/mainship,
 /area/mainship/living/briefing)
@@ -17875,6 +17861,18 @@
 	dir = 1
 	},
 /area/mainship/command/self_destruct)
+"wSj" = (
+/obj/machinery/power/apc/mainship/hardened{
+	dir = 8
+	},
+/obj/structure/cable,
+/obj/effect/turf_decal/warning_stripes/thin{
+	dir = 4
+	},
+/turf/open/floor/mainship/cargo/arrow{
+	dir = 4
+	},
+/area/mainship/command/self_destruct)
 "wSs" = (
 /obj/structure/cable,
 /obj/structure/disposalpipe/segment/corner{
@@ -18040,6 +18038,9 @@
 /area/mainship/engineering/engineering_workshop)
 "xdy" = (
 /obj/effect/landmark/start/job/ai,
+/obj/machinery/camera/autoname/mainship{
+	dir = 8
+	},
 /turf/open/floor/mainship/tcomms,
 /area/mainship/command/airoom)
 "xdN" = (
@@ -41288,12 +41289,12 @@ rGg
 kQn
 fbP
 sXo
-gmc
+axo
 qIt
 nNo
 fFD
 xYE
-axo
+rGg
 gmc
 kEP
 rKn
@@ -49288,7 +49289,7 @@ oHV
 uQI
 dla
 mBZ
-vfH
+fXS
 vfH
 bxQ
 vfH
@@ -49515,7 +49516,7 @@ pyV
 pgh
 pgh
 tBj
-xyS
+hGT
 hUf
 cNy
 hUf
@@ -49782,7 +49783,7 @@ gbM
 gbM
 gbM
 gbM
-ekk
+nyw
 eel
 ekk
 ekx
@@ -50038,7 +50039,7 @@ vAn
 vAn
 eZp
 vmD
-pvX
+vmD
 vmD
 acn
 vmD
@@ -51370,7 +51371,7 @@ kfm
 kfm
 saT
 soK
-juG
+ekM
 fez
 dcY
 wPV
@@ -51601,7 +51602,7 @@ lon
 bfc
 snn
 mBZ
-vfH
+fXS
 vfH
 bxQ
 vfH
@@ -53088,7 +53089,7 @@ kDx
 kDx
 plN
 oLC
-dig
+orC
 gnS
 kwS
 nGn
@@ -53371,7 +53372,7 @@ hhf
 hhf
 hhf
 hhf
-fQO
+hhf
 hhf
 dLx
 dLx
@@ -55938,8 +55939,8 @@ oKe
 uyy
 hpS
 lHu
-tzF
 faC
+mTH
 jzh
 bCZ
 dxc
@@ -56242,7 +56243,7 @@ kLR
 bXH
 xmu
 lrn
-ntN
+wSj
 fEf
 nIr
 dDg
