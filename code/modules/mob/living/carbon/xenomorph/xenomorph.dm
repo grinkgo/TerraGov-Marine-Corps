@@ -79,6 +79,8 @@
 	RegisterSignal(src, COMSIG_LIVING_WEEDS_AT_LOC_CREATED, PROC_REF(handle_weeds_on_movement))
 	handle_weeds_on_movement()
 
+	AddElement(/datum/element/footstep, FOOTSTEP_XENO_MEDIUM, mob_size >= MOB_SIZE_BIG ? 0.8 : 0.5)
+
 ///Change the caste of the xeno. If restore health is true, then health is set to the new max health
 /mob/living/carbon/xenomorph/proc/set_datum(restore_health_and_plasma = TRUE)
 	if(!caste_base_type)
@@ -209,7 +211,7 @@
 		return NONE
 	var/mob/living/carbon/xenomorph/crusher/grabbed = pulling
 	if(grabbed.stat == CONSCIOUS && stat == CONSCIOUS)
-		INVOKE_ASYNC(grabbed, /mob/living/carbon/xenomorph/crusher/proc.carry_xeno, src, TRUE)
+		INVOKE_ASYNC(grabbed, TYPE_PROC_REF(/mob/living/carbon/xenomorph/crusher, carry_xeno), src, TRUE)
 		return COMSIG_GRAB_SUCCESSFUL_SELF_ATTACK
 	return NONE
 

@@ -6894,11 +6894,6 @@
 	},
 /turf/open/floor/mainship/mono,
 /area/mainship/engineering/engine_core)
-"bTK" = (
-/obj/structure/table/mainship/nometal,
-/obj/machinery/computer/security/marinemainship_network,
-/turf/open/floor/mainship/floor,
-/area/mainship/command/cic)
 "bTL" = (
 /obj/structure/disposalpipe/segment{
 	dir = 4
@@ -9784,14 +9779,6 @@
 /obj/effect/landmark/start/job/corporateliaison,
 /turf/open/floor/carpet/side,
 /area/mainship/command/corporateliaison)
-"fAI" = (
-/obj/machinery/vending/engivend{
-	req_access = null
-	},
-/turf/open/floor/mainship/green{
-	dir = 8
-	},
-/area/mainship/squads/req)
 "fBV" = (
 /obj/structure/bed/chair/office/dark{
 	dir = 1
@@ -9941,6 +9928,12 @@
 /obj/structure/closet/toolcloset,
 /turf/open/floor/mainship/cargo,
 /area/mainship/hallways/port_hallway)
+"fJw" = (
+/obj/machinery/vending/engivend,
+/turf/open/floor/mainship/green{
+	dir = 8
+	},
+/area/mainship/squads/req)
 "fKd" = (
 /obj/machinery/microwave,
 /obj/structure/table/mainship/nometal,
@@ -12202,6 +12195,14 @@
 	},
 /turf/open/floor/mainship/ai,
 /area/mainship/living/numbertwobunks)
+"jIm" = (
+/obj/structure/table/mainship/nometal,
+/obj/machinery/computer/security/marinemainship_network,
+/obj/structure/platform{
+	dir = 8
+	},
+/turf/open/floor/mainship/floor,
+/area/mainship/command/cic)
 "jIP" = (
 /obj/machinery/atmospherics/pipe/simple/supply/hidden/layer1,
 /obj/structure/cable,
@@ -13516,17 +13517,6 @@
 	dir = 1
 	},
 /area/mainship/command/cic)
-"lNZ" = (
-/obj/structure/platform{
-	dir = 4
-	},
-/obj/machinery/light/mainship{
-	dir = 1
-	},
-/turf/open/floor/mainship/green{
-	dir = 5
-	},
-/area/mainship/command/cic)
 "lOP" = (
 /obj/machinery/atmospherics/pipe/simple/supply/hidden/layer1{
 	dir = 4
@@ -13769,7 +13759,7 @@
 /area/mainship/squads/delta)
 "mmZ" = (
 /obj/structure/table/mainship/nometal,
-/obj/item/fuelCell/full,
+/obj/item/fuel_cell/full,
 /obj/machinery/camera/autoname/mainship,
 /turf/open/floor/mainship/cargo,
 /area/mainship/engineering/engine_core)
@@ -15857,6 +15847,14 @@
 /obj/structure/cable,
 /turf/open/floor/mainship/floor,
 /area/mainship/living/officer_study)
+"pPo" = (
+/obj/machinery/light/mainship{
+	dir = 1
+	},
+/turf/open/floor/mainship/green{
+	dir = 5
+	},
+/area/mainship/command/cic)
 "pPG" = (
 /obj/structure/bed/stool{
 	pixel_y = 8
@@ -16018,15 +16016,6 @@
 /obj/effect/ai_node,
 /turf/open/floor/plating/plating_catwalk,
 /area/mainship/hull/port_hull)
-"qaA" = (
-/obj/structure/platform{
-	dir = 4
-	},
-/obj/machinery/light/mainship,
-/turf/open/floor/mainship/green{
-	dir = 6
-	},
-/area/mainship/command/cic)
 "qbG" = (
 /obj/machinery/light/mainship{
 	dir = 4
@@ -16908,6 +16897,14 @@
 	dir = 1
 	},
 /area/mainship/medical/operating_room_four)
+"rrO" = (
+/obj/structure/table/mainship/nometal,
+/obj/machinery/computer/secure_data,
+/obj/structure/platform{
+	dir = 8
+	},
+/turf/open/floor/mainship/floor,
+/area/mainship/command/cic)
 "rrR" = (
 /obj/structure/cable,
 /obj/machinery/power/apc/mainship{
@@ -17322,6 +17319,13 @@
 	dir = 8
 	},
 /area/mainship/living/tankerbunks)
+"siz" = (
+/obj/machinery/landinglight/ds2{
+	dir = 4
+	},
+/obj/machinery/computer/dropship_picker,
+/turf/open/floor/mainship/mono,
+/area/mainship/hallways/hangar)
 "siJ" = (
 /obj/machinery/atmospherics/pipe/simple/supply/hidden/layer1,
 /obj/machinery/atmospherics/pipe/simple/scrubbers/hidden{
@@ -17550,7 +17554,7 @@
 /area/mainship/command/cic)
 "syT" = (
 /obj/structure/table/mainship/nometal,
-/obj/item/fuelCell/full,
+/obj/item/fuel_cell/full,
 /turf/open/floor/mainship/cargo,
 /area/mainship/engineering/engine_core)
 "syY" = (
@@ -18277,11 +18281,6 @@
 	},
 /turf/open/floor/mainship/mono,
 /area/mainship/hallways/aft_hallway)
-"tRD" = (
-/obj/structure/table/mainship/nometal,
-/obj/machinery/computer/secure_data,
-/turf/open/floor/mainship/floor,
-/area/mainship/command/cic)
 "tSb" = (
 /obj/machinery/firealarm{
 	dir = 4
@@ -18957,6 +18956,12 @@
 	},
 /turf/open/floor/plating/plating_catwalk,
 /area/mainship/living/tankerbunks)
+"vcJ" = (
+/obj/machinery/light/mainship,
+/turf/open/floor/mainship/green{
+	dir = 6
+	},
+/area/mainship/command/cic)
 "vcZ" = (
 /obj/machinery/loadout_vendor,
 /turf/open/floor/mainship/green,
@@ -19757,7 +19762,7 @@
 /area/mainship/living/starboard_garden)
 "wIK" = (
 /obj/structure/table/mainship/nometal,
-/obj/item/fuelCell/full,
+/obj/item/fuel_cell/full,
 /obj/machinery/light/mainship{
 	dir = 1
 	},
@@ -20525,7 +20530,7 @@
 /area/mainship/command/bridge)
 "xVy" = (
 /obj/structure/table/mainship/nometal,
-/obj/item/fuelCell/full,
+/obj/item/fuel_cell/full,
 /obj/machinery/light/mainship,
 /turf/open/floor/mainship/cargo,
 /area/mainship/engineering/engine_core)
@@ -20546,7 +20551,7 @@
 /area/mainship/living/cryo_cells)
 "xZM" = (
 /obj/structure/table/mainship/nometal,
-/obj/item/fuelCell/full,
+/obj/item/fuel_cell/full,
 /obj/machinery/camera/autoname/mainship{
 	dir = 1
 	},
@@ -33805,13 +33810,13 @@ wPV
 eFi
 fPA
 bYT
-lNZ
+pPo
 wgT
 wgT
 wgT
 wgT
 wgT
-qaA
+vcJ
 bYT
 qOi
 wPV
@@ -34062,13 +34067,13 @@ arE
 wPV
 wPV
 pBS
-tRD
+rrO
 tmp
 lEm
 mvV
 nHq
 tmp
-bTK
+jIm
 pBS
 wPV
 wPV
@@ -41268,7 +41273,7 @@ pjZ
 hvu
 rpn
 eTz
-gyC
+siz
 cbZ
 vXp
 wPI
@@ -59502,7 +59507,7 @@ biu
 cbm
 cxA
 erX
-fAI
+fJw
 hfD
 pbV
 jMY
@@ -59514,7 +59519,7 @@ bnD
 jMY
 jFn
 hfD
-fAI
+fJw
 erX
 cxA
 wCe
