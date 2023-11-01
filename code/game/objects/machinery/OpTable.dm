@@ -8,7 +8,7 @@
 	layer = TABLE_LAYER
 	anchored = TRUE
 	resistance_flags = UNACIDABLE
-	allow_pass_flags = PASS_LOW_STRUCTURE|PASSABLE
+	allow_pass_flags = PASS_LOW_STRUCTURE|PASSABLE|PASS_WALKOVER
 	use_power = IDLE_POWER_USE
 	idle_power_usage = 1
 	active_power_usage = 5
@@ -22,6 +22,12 @@
 
 /obj/machinery/optable/Initialize(mapload)
 	. = ..()
+
+	var/static/list/connections = list(
+		COMSIG_OBJ_TRY_ALLOW_THROUGH = PROC_REF(can_climb_over),
+	)
+	AddElement(/datum/element/connect_loc, connections)
+
 	return INITIALIZE_HINT_LATELOAD
 
 
@@ -58,6 +64,7 @@
 	if(anes_tank)
 		user.put_in_active_hand(anes_tank)
 		to_chat(user, span_notice("You remove \the [anes_tank] from \the [src]."))
+		playsound(loc, 'sound/effects/air_release.ogg', 25, 1)
 		anes_tank = null
 
 

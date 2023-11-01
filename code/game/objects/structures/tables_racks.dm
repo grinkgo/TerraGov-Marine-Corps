@@ -11,7 +11,7 @@
 	layer = TABLE_LAYER
 	climbable = TRUE
 	resistance_flags = XENO_DAMAGEABLE
-	allow_pass_flags = PASS_LOW_STRUCTURE|PASSABLE
+	allow_pass_flags = PASS_LOW_STRUCTURE|PASSABLE|PASS_WALKOVER
 	hit_sound = 'sound/effects/metalhit.ogg'
 	coverage = 10
 	smoothing_flags = SMOOTH_BITMASK
@@ -28,10 +28,6 @@
 	max_integrity = 40
 	smoothing_groups = list(SMOOTH_GROUP_TABLES_GENERAL)
 	canSmoothWith = list(SMOOTH_GROUP_TABLES_GENERAL)
-
-/obj/structure/table/mainship/nometal
-	parts = /obj/item/frame/table/nometal
-	dropmetal = FALSE
 
 /obj/structure/table/deconstruct(disassembled)
 	if(disassembled)
@@ -67,6 +63,7 @@
 	var/static/list/connections = list(
 		COMSIG_ATOM_ENTERED = PROC_REF(on_cross),
 		COMSIG_ATOM_EXIT = PROC_REF(on_try_exit),
+		COMSIG_OBJ_TRY_ALLOW_THROUGH = PROC_REF(can_climb_over),
 	)
 	AddElement(/datum/element/connect_loc, connections)
 
@@ -95,15 +92,6 @@
 				icon_state = icon_state+"-"
 			if(tabledirs & turn(dir,-90))
 				icon_state = icon_state+"+"
-		return TRUE
-
-/obj/structure/table/CanAllowThrough(atom/movable/mover, turf/target)
-	. = ..()
-	if(.)
-		return
-
-	var/obj/structure/S = locate(/obj/structure) in get_turf(mover)
-	if(S?.climbable && !(S.flags_atom & ON_BORDER) && climbable && isliving(mover)) //Climbable non-border objects allow you to universally climb over others
 		return TRUE
 
 //Flipping tables, nothing more, nothing less
@@ -499,7 +487,11 @@
 	icon_state = "mainship_table-0"
 	base_icon_state = "mainship_table"
 	table_prefix = "ship"
+	parts = /obj/item/frame/table/mainship
 
+/obj/structure/table/mainship/nometal
+	parts = /obj/item/frame/table/mainship/nometal
+	dropmetal = FALSE
 
 /*
 * Racks
@@ -524,17 +516,9 @@
 	. = ..()
 	var/static/list/connections = list(
 		COMSIG_ATOM_ENTERED = PROC_REF(on_cross),
+		COMSIG_OBJ_TRY_ALLOW_THROUGH = PROC_REF(can_climb_over),
 	)
 	AddElement(/datum/element/connect_loc, connections)
-
-/obj/structure/rack/CanAllowThrough(atom/movable/mover, turf/target)
-	. = ..()
-	if(.)
-		return
-
-	var/obj/structure/S = locate(/obj/structure) in get_turf(mover)
-	if(S?.climbable && !(S.flags_atom & ON_BORDER) && climbable && isliving(mover)) //Climbable non-border  objects allow you to universally climb over others
-		return TRUE
 
 /obj/structure/rack/MouseDrop_T(obj/item/I, mob/user)
 	if (!istype(I) || user.get_active_held_item() != I)

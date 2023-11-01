@@ -10,7 +10,6 @@
 		move_resist = MOVE_FORCE_EXTREMELY_STRONG
 		move_force = MOVE_FORCE_EXTREMELY_STRONG
 	. = ..()
-
 	set_datum()
 	time_of_birth = world.time
 	add_inherent_verbs()
@@ -25,6 +24,7 @@
 		hivenumber = XENO_HIVE_ADMEME //so admins can safely spawn xenos in Thunderdome for tests.
 
 	set_initial_hivenumber()
+	voice = "Woman (Journalist)" // TODO when we get tagging make this pick female only
 
 	switch(stat)
 		if(CONSCIOUS)
@@ -79,7 +79,7 @@
 	RegisterSignal(src, COMSIG_LIVING_WEEDS_AT_LOC_CREATED, PROC_REF(handle_weeds_on_movement))
 	handle_weeds_on_movement()
 
-	AddElement(/datum/element/footstep, FOOTSTEP_XENO_MEDIUM, mob_size >= MOB_SIZE_BIG ? 0.8 : 0.5)
+	AddElement(/datum/element/footstep, footstep_type, mob_size >= MOB_SIZE_BIG ? 0.8 : 0.5)
 	set_jump_component()
 
 ///Change the caste of the xeno. If restore health is true, then health is set to the new max health
@@ -147,8 +147,23 @@
 //Since Xenos change names like they change shoes, we need somewhere to hammer in all those legos
 //We set their name first, then update their real_name AND their mind name
 /mob/living/carbon/xenomorph/proc/generate_name()
+	var/playtime_mins = client?.get_exp(xeno_caste.caste_name)
+	var/rank_name
+	switch(playtime_mins)
+		if(0 to 600)
+			rank_name = "Hatchling"
+		if(601 to 3000)
+			rank_name = "Young"
+		if(3001 to 9000)
+			rank_name = "Mature"
+		if(9001 to 18000)
+			rank_name = "Elder"
+		if(18001 to INFINITY)
+			rank_name = "Ancient"
+		else
+			rank_name = "Hatchling"
 	var/prefix = (hive.prefix || xeno_caste.upgrade_name) ? "[hive.prefix][xeno_caste.upgrade_name] " : ""
-	name = prefix + "[xeno_caste.display_name] ([nicknumber])"
+	name = prefix + "[rank_name ? "[rank_name] " : ""][xeno_caste.display_name] ([nicknumber])"
 
 	//Update linked data so they show up properly
 	real_name = name
@@ -159,46 +174,45 @@
 	switch(upgrade)
 		if(XENO_UPGRADE_INVALID)
 			return -1
-		if(XENO_UPGRADE_ZERO)
+		if(XENO_UPGRADE_NORMAL)
 			return 0
-		if(XENO_UPGRADE_ONE)
+		if(XENO_UPGRADE_PRIMO)
 			return 1
-		if(XENO_UPGRADE_TWO)
+
+///Returns the playtime as a number, used for rank icons
+/mob/living/carbon/xenomorph/proc/playtime_as_number()
+	var/playtime_mins = client?.get_exp(xeno_caste.caste_name)
+	switch(playtime_mins)
+		if(0 to 600)
+			return 0
+		if(601 to 3000)
+			return 1
+		if(3001 to 9000)
 			return 2
-		if(XENO_UPGRADE_THREE)
+		if(9001 to 18000)
 			return 3
-		if(XENO_UPGRADE_FOUR)
+		if(18001 to INFINITY)
 			return 4
+		else
+			return 0
 
 /mob/living/carbon/xenomorph/proc/upgrade_next()
 	switch(upgrade)
 		if(XENO_UPGRADE_INVALID)
 			return XENO_UPGRADE_INVALID
-		if(XENO_UPGRADE_ZERO)
-			return XENO_UPGRADE_ONE
-		if(XENO_UPGRADE_ONE)
-			return XENO_UPGRADE_TWO
-		if(XENO_UPGRADE_TWO)
-			return XENO_UPGRADE_THREE
-		if(XENO_UPGRADE_THREE)
-			return XENO_UPGRADE_FOUR
-		if(XENO_UPGRADE_FOUR)
-			return XENO_UPGRADE_FOUR
+		if(XENO_UPGRADE_NORMAL)
+			return XENO_UPGRADE_PRIMO
+		if(XENO_UPGRADE_PRIMO)
+			return XENO_UPGRADE_PRIMO
 
 /mob/living/carbon/xenomorph/proc/upgrade_prev()
 	switch(upgrade)
 		if(XENO_UPGRADE_INVALID)
 			return XENO_UPGRADE_INVALID
-		if(XENO_UPGRADE_ZERO)
-			return XENO_UPGRADE_ZERO
-		if(XENO_UPGRADE_ONE)
-			return XENO_UPGRADE_ZERO
-		if(XENO_UPGRADE_TWO)
-			return XENO_UPGRADE_ONE
-		if(XENO_UPGRADE_THREE)
-			return XENO_UPGRADE_TWO
-		if(XENO_UPGRADE_FOUR)
-			return XENO_UPGRADE_THREE
+		if(XENO_UPGRADE_NORMAL)
+			return XENO_UPGRADE_NORMAL
+		if(XENO_UPGRADE_PRIMO)
+			return XENO_UPGRADE_NORMAL
 
 /mob/living/carbon/xenomorph/proc/setup_job()
 	var/datum/job/xenomorph/xeno_job = SSjob.type_occupations[xeno_caste.job_type]
@@ -208,12 +222,13 @@
 
 /mob/living/carbon/xenomorph/proc/grabbed_self_attack()
 	SIGNAL_HANDLER
-	if(!(xeno_caste.can_flags & CASTE_CAN_RIDE_CRUSHER) || !isxenocrusher(pulling))
+	if(!(xeno_caste.can_flags & CASTE_CAN_RIDE_CRUSHER))
 		return NONE
-	var/mob/living/carbon/xenomorph/crusher/grabbed = pulling
-	if(grabbed.stat == CONSCIOUS && stat == CONSCIOUS)
-		INVOKE_ASYNC(grabbed, TYPE_PROC_REF(/mob/living/carbon/xenomorph/crusher, carry_xeno), src, TRUE)
-		return COMSIG_GRAB_SUCCESSFUL_SELF_ATTACK
+	if(isxenocrusher(pulling) || isxenobehemoth(pulling))
+		var/mob/living/carbon/xenomorph/crusher/grabbed = pulling
+		if(grabbed.stat == CONSCIOUS && stat == CONSCIOUS)
+			INVOKE_ASYNC(grabbed, TYPE_PROC_REF(/mob/living/carbon/xenomorph/crusher, carry_xeno), src, TRUE)
+			return COMSIG_GRAB_SUCCESSFUL_SELF_ATTACK
 	return NONE
 
 ///Initiate of form changing on the xeno
@@ -396,6 +411,11 @@
 	handle_weeds_on_movement()
 	return ..()
 
+/mob/living/carbon/xenomorph/CanAllowThrough(atom/movable/mover, turf/target)
+	if(mover.throwing && ismob(mover) && isxeno(mover.thrower)) //xenos can throw mobs past other xenos
+		return TRUE
+	return ..()
+
 /mob/living/carbon/xenomorph/set_stat(new_stat)
 	. = ..()
 	if(isnull(.))
@@ -436,4 +456,16 @@
 	return ..()
 
 /mob/living/carbon/xenomorph/set_jump_component(duration = 0.5 SECONDS, cooldown = 2 SECONDS, cost = 0, height = 16, sound = null, flags = JUMP_SHADOW, flags_pass = PASS_LOW_STRUCTURE|PASS_FIRE)
+	var/gravity = get_gravity()
+	if(gravity < 1) //low grav
+		duration *= 2.5 - gravity
+		cooldown *= 2 - gravity
+		height *= 2 - gravity
+		if(gravity <= 0.75)
+			flags_pass |= PASS_DEFENSIVE_STRUCTURE
+	else if(gravity > 1) //high grav
+		duration *= gravity * 0.5
+		cooldown *= gravity
+		height *= gravity * 0.5
+
 	AddComponent(/datum/component/jump, _jump_duration = duration, _jump_cooldown = cooldown, _stamina_cost = 0, _jump_height = height, _jump_sound = sound, _jump_flags = flags, _jumper_allow_pass_flags = flags_pass)

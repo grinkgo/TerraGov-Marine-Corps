@@ -60,7 +60,7 @@
 		UnregisterSignal(user, list(COMSIG_MOB_MIDDLE_CLICK, COMSIG_MOB_CLICK_ALT_RIGHT, COMSIG_ITEM_EXCLUSIVE_TOGGLE))
 		action.set_toggle(FALSE)
 	else
-		RegisterSignal(user, list(COMSIG_MOB_MIDDLE_CLICK, COMSIG_MOB_CLICK_ALT_RIGHT), PROC_REF(can_use_jetpack))
+		RegisterSignals(user, list(COMSIG_MOB_MIDDLE_CLICK, COMSIG_MOB_CLICK_ALT_RIGHT), PROC_REF(can_use_jetpack))
 		SEND_SIGNAL(user, COMSIG_ITEM_EXCLUSIVE_TOGGLE, user)
 		RegisterSignal(user, COMSIG_ITEM_EXCLUSIVE_TOGGLE, PROC_REF(unselect))
 		action.set_toggle(TRUE)
@@ -146,7 +146,9 @@
 		else
 			. += image('icons/obj/items/jetpack.dmi', src, "+jetpackempty")
 
-/obj/item/jetpack_marine/apply_custom(mutable_appearance/standing)
+/obj/item/jetpack_marine/apply_custom(mutable_appearance/standing, inhands, icon_used, state_used)
+	if(inhands)
+		return
 	. = ..()
 	if(lit)
 		standing.overlays += mutable_appearance('icons/mob/clothing/back.dmi',"+jetpack_lit")

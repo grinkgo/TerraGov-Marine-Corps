@@ -69,6 +69,8 @@
 			take_damage(rand(75, 125), BRUTE, BOMB)
 		if(EXPLODE_LIGHT)
 			take_damage(rand(25, 75), BRUTE, BOMB)
+		if(EXPLODE_WEAK)
+			take_damage(rand(15, 35), BRUTE, BOMB)
 
 //TODO: Make full windows a separate type of window.
 //Once a full window, it will always be a full window, so there's no point
@@ -130,7 +132,7 @@
 				M.visible_message(span_danger("[user] bashes [M] against \the [src]!"))
 				log_combat(user, M, "bashed", "", "against \the [src]")
 				if(prob(50))
-					M.Paralyze(20)
+					M.Paralyze(2 SECONDS)
 				M.apply_damage(10, blocked = MELEE)
 				UPDATEHEALTH(M)
 				take_damage(25, BRUTE, MELEE)
@@ -405,8 +407,8 @@
 
 
 
-/obj/structure/window/framed/deconstruct(disassembled = TRUE)
-	if(window_frame)
+/obj/structure/window/framed/deconstruct(disassembled = TRUE, leave_frame = TRUE)
+	if(window_frame && leave_frame)
 		var/obj/structure/window_frame/WF = new window_frame(loc, TRUE)
 		WF.icon_state = "[WF.basestate][junction]_frame"
 		WF.setDir(dir)

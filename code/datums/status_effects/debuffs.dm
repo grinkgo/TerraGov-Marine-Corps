@@ -16,6 +16,21 @@
 		duration = set_duration
 	return ..()
 
+//STAGGERED
+/datum/status_effect/incapacitating/stagger
+	id = "stagger"
+
+/datum/status_effect/incapacitating/stagger/on_apply()
+	. = ..()
+	if(!.)
+		return
+	ADD_TRAIT(owner, TRAIT_STAGGERED, TRAIT_STATUS_EFFECT(id))
+	owner.adjust_mob_scatter(5)
+
+/datum/status_effect/incapacitating/stagger/on_remove()
+	REMOVE_TRAIT(owner, TRAIT_STAGGERED, TRAIT_STATUS_EFFECT(id))
+	owner.adjust_mob_scatter(-5)
+
 //STUN
 /datum/status_effect/incapacitating/stun
 	id = "stun"
@@ -40,9 +55,11 @@
 	. = ..()
 	if(!.)
 		return
+	ADD_TRAIT(owner, TRAIT_INCAPACITATED, TRAIT_STATUS_EFFECT(id))
 	ADD_TRAIT(owner, TRAIT_FLOORED, TRAIT_STATUS_EFFECT(id))
 
 /datum/status_effect/incapacitating/knockdown/on_remove()
+	REMOVE_TRAIT(owner, TRAIT_INCAPACITATED, TRAIT_STATUS_EFFECT(id))
 	REMOVE_TRAIT(owner, TRAIT_FLOORED, TRAIT_STATUS_EFFECT(id))
 	return ..()
 
@@ -166,13 +183,13 @@
 	. = ..()
 	if(!.)
 		return
-	owner.disabilities |= BLIND
-	owner.blind_eyes(1)
+	//Robots and synths are generally resistant to blinding, so we apply an overlay directly instead
+	owner.overlay_fullscreen("repair-mode", /atom/movable/screen/fullscreen/blind)
 	ADD_TRAIT(owner, TRAIT_INCAPACITATED, TRAIT_STATUS_EFFECT(id))
 	ADD_TRAIT(owner, TRAIT_IMMOBILE, TRAIT_STATUS_EFFECT(id))
 
 /datum/status_effect/incapacitating/repair_mode/on_remove()
-	owner.disabilities &= ~BLIND
+	owner.clear_fullscreen("repair-mode")
 	REMOVE_TRAIT(owner, TRAIT_INCAPACITATED, TRAIT_STATUS_EFFECT(id))
 	REMOVE_TRAIT(owner, TRAIT_IMMOBILE, TRAIT_STATUS_EFFECT(id))
 	return ..()
@@ -374,6 +391,8 @@
 	. = ..()
 	if(!.)
 		return
+	if(HAS_TRAIT(owner, TRAIT_SLOWDOWNIMMUNE))
+		return
 	owner.add_movespeed_modifier(MOVESPEED_ID_HARVEST_TRAM_SLOWDOWN, TRUE, 0, NONE, TRUE, debuff_slowdown)
 
 /datum/status_effect/incapacitating/harvester_slowdown/on_remove()
@@ -415,6 +434,14 @@
 
 /datum/status_effect/spacefreeze/tick()
 	owner.adjustFireLoss(40)
+
+/datum/status_effect/spacefreeze/light
+	id = "spacefreeze_light"
+
+/datum/status_effect/spacefreeze/light/tick()
+	if(owner.stat == DEAD)
+		return
+	owner.adjustFireLoss(10)
 
 ///irradiated mob
 /datum/status_effect/incapacitating/irradiated
@@ -510,7 +537,7 @@
 	particle_holder.particles.spawning = 1 + round(stacks / 2)
 	if(stacks >= 20)
 		debuff_owner.adjust_slowdown(1)
-		debuff_owner.adjust_stagger(1)
+		debuff_owner.adjust_stagger(1 SECONDS)
 
 /// Called when the debuff's owner uses the Resist action for this debuff.
 /datum/status_effect/stacking/intoxicated/proc/call_resist_debuff()
@@ -533,6 +560,40 @@
 		resist_debuff() // We repeat ourselves as long as the debuff persists.
 		return
 
+
+// ***************************************
+// *********** dread
+// ***************************************
+/atom/movable/screen/alert/status_effect/dread
+	name = "Dread"
+	desc = "A dreadful presence. You are slowed down until this expires."
+	icon_state = "dread"
+
+/datum/status_effect/dread
+	id = "dread"
+	status_type = STATUS_EFFECT_REPLACE
+	tick_interval = 2 SECONDS
+	alert_type = /atom/movable/screen/alert/status_effect/dread
+
+/datum/status_effect/dread/on_creation(mob/living/new_owner, set_duration)
+	owner = new_owner
+	duration = set_duration
+	return ..()
+
+/datum/status_effect/dread/tick()
+	. = ..()
+	var/mob/living/living_owner = owner
+	living_owner.do_jitter_animation(250)
+
+/datum/status_effect/dread/on_apply()
+	. = ..()
+	if(!.)
+		return
+	owner.add_movespeed_modifier(MOVESPEED_ID_XENO_DREAD, TRUE, 0, NONE, TRUE, 0.4)
+
+/datum/status_effect/dread/on_remove()
+	owner.remove_movespeed_modifier(MOVESPEED_ID_XENO_DREAD)
+	return ..()
 
 // ***************************************
 // *********** Melting

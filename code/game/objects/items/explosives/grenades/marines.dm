@@ -77,7 +77,8 @@
 	icon_state = "grenade_sticky"
 	item_state = "grenade_sticky"
 	det_time = 5 SECONDS
-	light_impact_range = 3
+	light_impact_range = 2
+	weak_impact_range = 3
 	///Current atom this grenade is attached to, used to remove the overlay.
 	var/atom/stuck_to
 	///Current image overlay applied to stuck_to, used to remove the overlay after detonation.
@@ -85,8 +86,10 @@
 
 /obj/item/explosive/grenade/sticky/throw_impact(atom/hit_atom, speed)
 	. = ..()
+	if(!.)
+		return
 	if(!active || stuck_to || isturf(hit_atom))
-		return TRUE
+		return
 	var/image/stuck_overlay = image(icon, hit_atom, initial(icon_state) + "_stuck")
 	stuck_overlay.pixel_x = rand(-5, 5)
 	stuck_overlay.pixel_y = rand(-7, 7)
@@ -94,7 +97,7 @@
 	forceMove(hit_atom)
 	saved_overlay = stuck_overlay
 	stuck_to = hit_atom
-	RegisterSignal(stuck_to, COMSIG_PARENT_QDELETING, PROC_REF(clean_refs))
+	RegisterSignal(stuck_to, COMSIG_QDELETING, PROC_REF(clean_refs))
 
 /obj/item/explosive/grenade/sticky/prime()
 	if(stuck_to)
@@ -108,7 +111,7 @@
 /obj/item/explosive/grenade/sticky/proc/clean_refs()
 	stuck_to.cut_overlay(saved_overlay)
 	SIGNAL_HANDLER
-	UnregisterSignal(stuck_to, COMSIG_PARENT_QDELETING)
+	UnregisterSignal(stuck_to, COMSIG_QDELETING)
 	stuck_to = null
 	saved_overlay = null
 
@@ -118,7 +121,6 @@
 	icon_state = "grenade_sticky_fire"
 	item_state = "grenade_sticky_fire"
 	det_time = 5 SECONDS
-	light_impact_range = 1
 
 /obj/item/explosive/grenade/sticky/trailblazer/prime()
 	flame_radius(0.5, get_turf(src))
@@ -129,7 +131,7 @@
 
 /obj/item/explosive/grenade/sticky/trailblazer/throw_impact(atom/hit_atom, speed)
 	. = ..()
-	if(.)
+	if(!.)
 		return
 	RegisterSignal(stuck_to, COMSIG_MOVABLE_MOVED, PROC_REF(make_fire))
 	var/turf/T = get_turf(src)
@@ -142,6 +144,47 @@
 	T.ignite(25, 25)
 
 /obj/item/explosive/grenade/sticky/trailblazer/clean_refs()
+	stuck_to.cut_overlay(saved_overlay)
+	UnregisterSignal(stuck_to, COMSIG_MOVABLE_MOVED)
+	return ..()
+
+/obj/item/explosive/grenade/sticky/cloaker
+	name = "\improper M45 Cloaker grenade"
+	desc = "Capsule based grenade that sticks to sufficiently hard surfaces, causing a trail of air combustable gel to form. This one creates cloaking smoke! It is set to detonate in 5 seconds."
+	icon_state = "grenade_sticky_cloak"
+	item_state = "grenade_sticky_cloak"
+	det_time = 5 SECONDS
+	light_impact_range = 1
+	/// smoke type created when the grenade is primed
+	var/datum/effect_system/smoke_spread/smoketype = /datum/effect_system/smoke_spread/tactical
+	///radius this smoke grenade will encompass
+	var/smokeradius = 1
+	///The duration of the smoke
+	var/smoke_duration = 8
+
+/obj/item/explosive/grenade/sticky/cloaker/prime()
+	var/datum/effect_system/smoke_spread/smoke = new smoketype()
+	playsound(loc, 'sound/effects/smoke_bomb.ogg', 35)
+	smoke.set_up(smokeradius, loc, smoke_duration)
+	smoke.start()
+	if(stuck_to)
+		clean_refs()
+	qdel(src)
+
+/obj/item/explosive/grenade/sticky/cloaker/throw_impact(atom/hit_atom, speed)
+	. = ..()
+	if(!.)
+		return
+	RegisterSignal(stuck_to, COMSIG_MOVABLE_MOVED, PROC_REF(make_smoke))
+
+///causes fire tiles underneath target when stuck_to
+/obj/item/explosive/grenade/sticky/cloaker/proc/make_smoke(datum/source, old_loc, movement_dir, forced, old_locs)
+	SIGNAL_HANDLER
+	var/datum/effect_system/smoke_spread/smoke = new smoketype()
+	smoke.set_up(smokeradius, loc, smoke_duration)
+	smoke.start()
+
+/obj/item/explosive/grenade/sticky/cloaker/clean_refs()
 	stuck_to.cut_overlay(saved_overlay)
 	UnregisterSignal(stuck_to, COMSIG_MOVABLE_MOVED)
 	return ..()
@@ -196,6 +239,14 @@
 	playsound(loc, "molotov", 35)
 	qdel(src)
 
+/obj/item/explosive/grenade/incendiary/molotov/throw_impact(atom/hit_atom, speed, bounce = TRUE)
+	. = ..()
+	if(!.)
+		return
+	if(!hit_atom.density || prob(35))
+		return
+	prime()
+
 /obj/item/explosive/grenade/ags
 	name = "\improper AGLS-37 HEDP grenade"
 	desc = "A small tiny smart grenade, it is about to blow up in your face, unless you found it inert. Otherwise a pretty normal grenade, other than it is somehow in a primeable state."
@@ -204,7 +255,8 @@
 	icon_state = "ags_grenade"
 	item_state = "ags_grenade"
 	det_time = 2 SECONDS
-	light_impact_range = 3
+	light_impact_range = 2
+	weak_impact_range = 4
 
 
 /obj/item/explosive/grenade/smokebomb
@@ -272,6 +324,12 @@
 	smoketype = /datum/effect_system/smoke_spread/satrapine
 	smokeradius = 6
 
+/obj/item/explosive/grenade/smokebomb/satrapine/activate(mob/user)
+	. = ..()
+	if(!.)
+		return FALSE
+	user?.record_war_crime()
+
 /obj/item/explosive/grenade/smokebomb/cloak
 	name = "\improper M40-2 SCDP smoke grenade"
 	desc = "A sophisticated version of the M40 HSDP with a slighty improved smoke screen payload. It's set to detonate in 2 seconds."
@@ -331,6 +389,12 @@
 	flame_radius(1, get_turf(src), burn_intensity = 45, burn_duration = 75, burn_damage = 15, fire_stacks = 75)	//The closer to the middle you are the more it hurts
 	qdel(src)
 
+/obj/item/explosive/grenade/phosphorus/activate(mob/user)
+	. = ..()
+	if(!.)
+		return FALSE
+	user?.record_war_crime()
+
 /obj/item/explosive/grenade/phosphorus/upp
 	name = "\improper Type 8 WP grenade"
 	desc = "A deadly gas grenade found within the ranks of the USL. Designed to spill white phosphorus on the target. It explodes 2 seconds after the pin has been pulled."
@@ -351,6 +415,8 @@
 
 /obj/item/explosive/grenade/impact/throw_impact(atom/hit_atom, speed)
 	. = ..()
+	if(!.)
+		return
 	if(launched && active && !istype(hit_atom, /turf/open)) //Only contact det if active, we actually hit something, and we're fired from a grenade launcher.
 		explosion(loc, light_impact_range = 1, flash_range = 2)
 		qdel(src)
@@ -462,6 +528,8 @@
 
 /obj/item/explosive/grenade/flare/throw_impact(atom/hit_atom, speed)
 	. = ..()
+	if(!.)
+		return
 	if(!active)
 		return
 
@@ -532,6 +600,8 @@
 
 /obj/item/explosive/grenade/flare/strongerflare/throw_impact(atom/hit_atom, speed)
 	. = ..()
+	if(!.)
+		return
 	anchored = TRUE//prevents marines from picking up and running around with a stronger flare
 
 /obj/item/explosive/grenade/flare/strongerflare/update_brightness()

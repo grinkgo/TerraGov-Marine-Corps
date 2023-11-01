@@ -65,6 +65,11 @@
 	name = "captain's shoes"
 	desc = "Has special soles for better trampling those underneath."
 
+/obj/item/clothing/shoes/marinechief/som
+	name = "officer's boots"
+	desc = "A shiny pair of boots, normally seen on the feet of SOM officers."
+	icon_state = "som_officer_boots"
+
 /obj/item/clothing/shoes/marinechief/sa
 	name = "spatial agent's shoes"
 	desc = "Shoes worn by a spatial agent."
@@ -85,10 +90,11 @@
 	flags_inventory = NOSLIPPING
 	siemens_coefficient = 0.6
 
-/obj/item/clothing/shoes/veteran/pmc/commando
+/obj/item/clothing/shoes/marine/deathsquad
 	name = "\improper PMC commando boots"
 	desc = "A pair of heavily armored, acid-resistant boots."
 	icon_state = "commando_boots"
+	item_state = "commando_boots"
 	permeability_coefficient = 0.01
 	flags_armor_protection = FEET
 	soft_armor = list(MELEE = 40, BULLET = 20, LASER = 20, ENERGY = 20, BOMB = 30, BIO = 20, FIRE = 20, ACID = 25)
@@ -98,6 +104,7 @@
 	flags_heat_protection = FEET
 	siemens_coefficient = 0.2
 	resistance_flags = UNACIDABLE
+	starting_attachments = list(/obj/item/armor_module/storage/boot/full)
 
 /*=========Imperium=========*/
 

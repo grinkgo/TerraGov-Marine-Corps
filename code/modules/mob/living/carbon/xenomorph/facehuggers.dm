@@ -83,15 +83,15 @@
 ///Registers the source of our facehugger for the purpose of anti-shuffle mechanics
 /obj/item/clothing/mask/facehugger/proc/facehugger_register_source(mob/living/carbon/xenomorph/S)
 	if(source) //If we have an existing source, unregister
-		UnregisterSignal(source, COMSIG_PARENT_QDELETING)
+		UnregisterSignal(source, COMSIG_QDELETING)
 
 	source = S //set and register new source
-	RegisterSignal(S, COMSIG_PARENT_QDELETING, PROC_REF(clear_hugger_source))
+	RegisterSignal(S, COMSIG_QDELETING, PROC_REF(clear_hugger_source))
 
 ///Clears the source of our facehugger for the purpose of anti-shuffle mechanics
 /obj/item/clothing/mask/facehugger/proc/clear_hugger_source()
 	SIGNAL_HANDLER
-	UnregisterSignal(source, COMSIG_PARENT_QDELETING)
+	UnregisterSignal(source, COMSIG_QDELETING)
 	source = null
 
 /obj/item/clothing/mask/facehugger/Destroy()
@@ -245,12 +245,8 @@
 	if(stat != CONSCIOUS) //need to be active to leap
 		return
 
-	for(var/check_smoke in get_turf(src)) //Check for pacifying smoke
-		if(!istype(check_smoke, /obj/effect/particle_effect/smoke/xeno))
-			continue
-
-		var/obj/effect/particle_effect/smoke/xeno/xeno_smoke = check_smoke
-		if(CHECK_BITFIELD(xeno_smoke.smoke_traits, SMOKE_HUGGER_PACIFY)) //Cancel out and make the hugger go idle if we have the xeno pacify tag
+	for(var/obj/effect/particle_effect/smoke/check_smoke in get_turf(src)) //Check for pacifying smoke
+		if(CHECK_BITFIELD(check_smoke.smoke_traits, SMOKE_HUGGER_PACIFY)) //Cancel out and make the hugger go idle if we have the xeno pacify tag
 			go_idle()
 			return
 
@@ -353,44 +349,43 @@
 		return TRUE
 	return FALSE
 
-/obj/item/clothing/mask/facehugger/throw_at(atom/target, range, speed)
+/obj/item/clothing/mask/facehugger/throw_at(atom/target, range, speed, thrower, spin, flying = FALSE, targetted_throw = TRUE)
 	. = ..()
 	update_icon()
 
 /obj/item/clothing/mask/facehugger/throw_impact(atom/hit_atom, speed)
+	if(isopenturf(hit_atom))
+		leaping = FALSE
+		go_idle()
+		return FALSE
 	. = ..()
+	if(!.)
+		return
 	if(stat != CONSCIOUS)
-		return ..()
-	if(iscarbon(hit_atom))
-		var/mob/living/carbon/M = hit_atom
-		if(loc == M) //Caught
-			update_icon()
-			pre_leap(impact_time)
-		else if(leaping && M.can_be_facehugged(src)) //Standard leaping behaviour, not attributable to being _thrown_ such as by a Carrier.
-			if(!Attach(M))
-				go_idle()
-			return
-		else
-			step(src, REVERSE_DIR(dir)) //We want the hugger to bounce off if it hits a mob.
-			update_icon()
-			if(!issamexenohive(M)) //If the target is not friendly, stagger and slow it, and activate faster.
-				M.adjust_stagger(3) //Apply stagger and slowdown so the carrier doesn't have to suicide when going for direct hugger hits.
-				M.add_slowdown(3)
-				pre_leap(impact_time) //Go into the universal leap set up proc
-				return
+		return
+	if(!iscarbon(hit_atom))
+		leaping = FALSE
+		go_idle()
+		return
 
-			pre_leap(activate_time) //Go into the universal leap set up proc
-			return
+	var/mob/living/carbon/M = hit_atom
+	if(loc == M) //Caught
+		pre_leap(impact_time)
+	else if(leaping && M.can_be_facehugged(src)) //Standard leaping behaviour, not attributable to being _thrown_ such as by a Carrier.
+		if(!Attach(M))
+			go_idle()
 	else
-		if(leaping)
-			for(var/mob/living/carbon/M in loc)
-				if(M.can_be_facehugged(src))
-					if(!Attach(M))
-						go_idle()
-					return
-	leaping = FALSE
-	go_idle(FALSE)
+		step(src, REVERSE_DIR(dir))
+		if(!issamexenohive(M))
+			M.adjust_stagger(3 SECONDS)
+			M.add_slowdown(3)
+		pre_leap(activate_time)
 
+	leaping = FALSE
+
+/obj/item/clothing/mask/facehugger/stop_throw(flying, original_layer)
+	. = ..()
+	update_icon()
 
 //////////////////////
 //  FACEHUG CHECKS
@@ -564,6 +559,9 @@
 			embryo.hivenumber = hivenumber
 			GLOB.round_statistics.now_pregnant++
 			SSblackbox.record_feedback("tally", "round_statistics", 1, "now_pregnant")
+			if(source?.client)
+				var/datum/personal_statistics/personal_statistics = GLOB.personal_statistics_list[source.ckey]
+				personal_statistics.impregnations++
 			sterile = TRUE
 		kill_hugger()
 	else
@@ -757,7 +755,7 @@
 		if(isxeno(target)) //Xenos aren't affected by sticky resin
 			continue
 
-		target.adjust_stagger(3)
+		target.adjust_stagger(3 SECONDS)
 		target.add_slowdown(15)
 		target.apply_damage(100, STAMINA, BODY_ZONE_HEAD, BIO, updating_health = TRUE) //This should prevent sprinting
 

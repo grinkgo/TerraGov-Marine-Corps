@@ -8,7 +8,7 @@
 	layer = BELOW_OBJ_LAYER
 	flags_atom = ON_BORDER
 	resistance_flags = XENO_DAMAGEABLE
-	allow_pass_flags = PASS_DEFENSIVE_STRUCTURE|PASSABLE
+	allow_pass_flags = PASS_DEFENSIVE_STRUCTURE|PASSABLE|PASS_WALKOVER
 	climb_delay = 20 //Leaping a barricade is universally much faster than clumsily climbing on a table or rack
 	interaction_flags = INTERACT_CHECK_INCAPACITATED
 	max_integrity = 100
@@ -34,7 +34,8 @@
 	. = ..()
 	update_icon()
 	var/static/list/connections = list(
-		COMSIG_ATOM_EXIT = PROC_REF(on_try_exit)
+		COMSIG_ATOM_EXIT = PROC_REF(on_try_exit),
+		COMSIG_OBJ_TRY_ALLOW_THROUGH = PROC_REF(can_climb_over),
 	)
 	AddElement(/datum/element/connect_loc, connections)
 
@@ -55,25 +56,21 @@
 		if(-INFINITY to 25)
 			. += span_warning("It's crumbling apart, just a few more blows will tear it apart.")
 
-
 /obj/structure/barricade/on_try_exit(datum/source, atom/movable/mover, direction, list/knownblockers)
 	. = ..()
 
-	if(mover?.throwing && is_wired && iscarbon(mover) && (direction & dir))
+	if(mover?.throwing && !CHECK_MULTIPLE_BITFIELDS(mover?.pass_flags, HOVERING) && density && is_wired && iscarbon(mover) && (direction & dir))
 		knownblockers += src
 		return COMPONENT_ATOM_BLOCK_EXIT
 
 /obj/structure/barricade/CanAllowThrough(atom/movable/mover, turf/target)
-	if(mover?.throwing && is_wired && iscarbon(mover) && (get_dir(loc, target) & dir))
-		return FALSE
+	if(get_dir(loc, target) & dir)
+		if(!CHECK_MULTIPLE_BITFIELDS(mover?.pass_flags, HOVERING) && is_wired && density && ismob(mover))
+			return FALSE
+		if(istype(mover, /obj/effect/xenomorph)) //cades stop xeno effects like acid spray
+			return FALSE
 
-	. = ..()
-	if(.)
-		return
-
-	var/obj/structure/S = locate(/obj/structure) in get_turf(mover)
-	if(S?.climbable && !(S.flags_atom & ON_BORDER) && climbable && isliving(mover)) //Climbable objects allow you to universally climb over others
-		return TRUE
+	return ..()
 
 /obj/structure/barricade/attack_animal(mob/user)
 	return attack_alien(user)
@@ -160,6 +157,8 @@
 			take_damage(rand(33, 66), BRUTE, BOMB)
 		if(EXPLODE_LIGHT)
 			take_damage(rand(10, 33), BRUTE, BOMB)
+		if(EXPLODE_WEAK)
+			take_damage(10, BRUTE, BOMB)
 	update_icon()
 
 /obj/structure/barricade/setDir(newdir)
@@ -373,7 +372,7 @@
 	if(!D.use(1))
 		return
 
-	repair_damage(max_integrity)
+	repair_damage(max_integrity, user)
 	balloon_alert_to_viewers("Repaired")
 	update_icon()
 
@@ -397,7 +396,7 @@
 	desc = "A sturdy and easily assembled barricade made of metal plates, often used for quick fortifications. Use a blowtorch to repair."
 	icon_state = "metal_0"
 	max_integrity = 200
-	soft_armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, BIO = 100, FIRE = 80, ACID = 40)
+	soft_armor = list(MELEE = 0, BULLET = 30, LASER = 30, ENERGY = 30, BOMB = 0, BIO = 100, FIRE = 80, ACID = 40)
 	coverage = 128
 	stack_type = /obj/item/stack/sheet/metal
 	stack_amount = 4
@@ -461,7 +460,7 @@
 	if(!metal_sheets.use(2))
 		return FALSE
 
-	repair_damage(max_integrity * 0.3)
+	repair_damage(max_integrity * 0.3, user)
 	balloon_alert_to_viewers("Base repaired")
 	update_icon()
 
@@ -501,7 +500,7 @@
 		if(CADE_TYPE_BOMB)
 			soft_armor = soft_armor.modifyRating(bomb = 50)
 		if(CADE_TYPE_MELEE)
-			soft_armor = soft_armor.modifyRating(melee = 30, bullet = 30)
+			soft_armor = soft_armor.modifyRating(melee = 30, bullet = 30, laser = 30, energy = 30)
 		if(CADE_TYPE_ACID)
 			soft_armor = soft_armor.modifyRating(acid = 20)
 			resistance_flags |= UNACIDABLE
@@ -672,7 +671,7 @@
 				if(CADE_TYPE_BOMB)
 					soft_armor = soft_armor.modifyRating(bomb = -50)
 				if(CADE_TYPE_MELEE)
-					soft_armor = soft_armor.modifyRating(melee = -30, bullet = -30)
+					soft_armor = soft_armor.modifyRating(melee = -30, bullet = -30, laser = -30, energy = -30)
 				if(CADE_TYPE_ACID)
 					soft_armor = soft_armor.modifyRating(acid = -20)
 					resistance_flags &= ~UNACIDABLE
@@ -691,6 +690,8 @@
 			take_damage(rand(150, 350), BRUTE, BOMB)
 		if(EXPLODE_LIGHT)
 			take_damage(rand(50, 100), BRUTE, BOMB)
+		if(EXPLODE_WEAK)
+			take_damage(rand(25, 50), BRUTE, BOMB)
 
 	update_icon()
 
@@ -712,7 +713,7 @@
 	desc = "A very sturdy barricade made out of plasteel panels, the pinnacle of strongpoints. Use a blowtorch to repair. Can be flipped down to create a path."
 	icon_state = "plasteel_closed_0"
 	max_integrity = 500
-	soft_armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, BIO = 100, FIRE = 80, ACID = 40)
+	soft_armor = list(MELEE = 0, BULLET = 30, LASER = 30, ENERGY = 30, BOMB = 0, BIO = 100, FIRE = 80, ACID = 40)
 	coverage = 128
 	stack_type = /obj/item/stack/sheet/plasteel
 	stack_amount = 5
@@ -908,7 +909,7 @@
 		if(!plasteel_sheets.use(2))
 			return
 
-		repair_damage(max_integrity * 0.3)
+		repair_damage(max_integrity * 0.3, user)
 		balloon_alert_to_viewers("Base repaired")
 		update_icon()
 
@@ -956,6 +957,8 @@
 			take_damage(rand(200, 400), BRUTE, BOMB)
 		if(EXPLODE_LIGHT)
 			take_damage(rand(50, 150), BRUTE, BOMB)
+		if(EXPLODE_WEAK)
+			take_damage(rand(25, 75), BRUTE, BOMB)
 
 	update_icon()
 
@@ -972,7 +975,7 @@
 	desc = "A bunch of bags filled with sand, stacked into a small wall. Surprisingly sturdy, albeit labour intensive to set up. Trusted to do the job since 1914."
 	icon_state = "sandbag_0"
 	max_integrity = 300
-	soft_armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, BIO = 100, FIRE = 80, ACID = 40)
+	soft_armor = list(MELEE = 0, BULLET = 30, LASER = 30, ENERGY = 30, BOMB = 0, BIO = 100, FIRE = 80, ACID = 40)
 	coverage = 128
 	stack_type = /obj/item/stack/sandbags
 	hit_sound = "sound/weapons/genhit.ogg"
@@ -1034,7 +1037,7 @@
 		if(!D.use(1))
 			return
 
-		repair_damage(max_integrity * 0.2) //Each sandbag restores 20% of max health as 5 sandbags = 1 sandbag barricade.
+		repair_damage(max_integrity * 0.2, user) //Each sandbag restores 20% of max health as 5 sandbags = 1 sandbag barricade.
 		balloon_alert_to_viewers("Repaired")
 		update_icon()
 
@@ -1045,7 +1048,7 @@
 	barricade_type = "folding"
 	can_wire = TRUE
 	is_wired = FALSE
-	soft_armor = list(MELEE = 35, BULLET = 30, LASER = 20, ENERGY = 40, BOMB = 25, BIO = 100, FIRE = 100, ACID = 30)
+	soft_armor = list(MELEE = 35, BULLET = 30, LASER = 30, ENERGY = 30, BOMB = 25, BIO = 100, FIRE = 100, ACID = 30)
 	///Whether this item can be deployed or undeployed
 	var/flags_item = IS_DEPLOYABLE
 	///What it deploys into. typecast version of internal_item
@@ -1053,6 +1056,9 @@
 
 /obj/structure/barricade/metal/deployable/Initialize(mapload, _internal_item, deployer)
 	. = ..()
+	if(!_internal_item && !internal_shield)
+		return INITIALIZE_HINT_QDEL
+
 	internal_shield = _internal_item
 
 	name = internal_shield.name
@@ -1096,3 +1102,27 @@
 
 /obj/structure/barricade/metal/deployable/attempt_barricade_upgrade()
 	return //not upgradable
+
+
+/*----------------------*/
+// CONCRETE
+/*----------------------*/
+
+/obj/structure/barricade/concrete
+	name = "concrete barricade"
+	desc = "A short wall made of reinforced concrete. It looks like it can take a lot of punishment."
+	icon_state = "concrete_0"
+	coverage = 100
+	max_integrity = 500
+	soft_armor = list(MELEE = 60, BULLET = 60, LASER = 60, ENERGY = 60, BOMB = 40, BIO = 100, FIRE = 100, ACID = 20)
+	stack_type = null
+	destroyed_stack_amount = 0
+	hit_sound = "sound/effects/metalhit.ogg"
+	barricade_type = "concrete"
+	can_wire = FALSE
+
+/obj/structure/barricade/concrete/update_overlays()
+	. = ..()
+	var/image/new_overlay = image(icon, src, "[icon_state]_overlay", dir == SOUTH ? BELOW_OBJ_LAYER : ABOVE_MOB_LAYER, dir)
+	new_overlay.pixel_y = (dir == SOUTH ? -32 : 32)
+	. += new_overlay

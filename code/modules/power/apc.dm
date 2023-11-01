@@ -27,15 +27,17 @@
 /obj/machinery/power/apc
 	name = "area power controller"
 	desc = "A control terminal for the area electrical systems."
-	icon = 'icons/obj/wallframes.dmi'
+	icon = 'icons/obj/machines/apc.dmi'
 	icon_state = "apc0"
-	pixel_x = -16
-	pixel_y = -16
+	//pixel_x = -16
+	//pixel_y = -16
 	anchored = TRUE
 	use_power = NO_POWER_USE
 	req_access = list(ACCESS_CIVILIAN_ENGINEERING)
 	resistance_flags = UNACIDABLE
 	interaction_flags = INTERACT_MACHINE_TGUI
+	light_range = 1
+	light_power = 0.5
 	var/area/area
 	var/areastring = null
 	var/obj/item/cell/cell
@@ -98,13 +100,13 @@
 
 	switch(dir)
 		if(NORTH)
-			pixel_y -= 32
+			pixel_y = -32
 		if(SOUTH)
-			pixel_y += 32
+			pixel_y = 32
 		if(EAST)
-			pixel_x -= 32
+			pixel_x = -32
 		if(WEST)
-			pixel_x += 32
+			pixel_x = 32
 
 	if(building)
 		var/area/A = get_area(src)
@@ -120,6 +122,19 @@
 
 	. = ..()
 
+	var/area/A = get_area(src)
+
+	//If area isn't specified use current
+	if(isarea(A) && areastring == null)
+		area = A
+		name = "\improper [area.name] APC"
+	else
+		area = get_area_name(areastring)
+		name = "\improper [area.name] APC"
+
+	update_icon()
+	update() //areas should be lit on startup
+
 	if(mapload)
 		has_electronics = APC_ELECTRONICS_SECURED
 
@@ -129,17 +144,7 @@
 			cell.charge = start_charge * cell.maxcharge / 100.0 //Convert percentage to actual value
 			cell.update_icon()
 
-		var/area/A = get_area(src)
 
-		//If area isn't specified use current
-		if(isarea(A) && areastring == null)
-			area = A
-			name = "\improper [area.name] APC"
-		else
-			area = get_area_name(areastring)
-			name = "\improper [area.name] APC"
-
-		update_icon()
 		make_terminal()
 
 		update() //areas should be lit on startup
@@ -166,10 +171,10 @@
 ///Wrapper to guarantee powercells are properly nulled and avoid hard deletes.
 /obj/machinery/power/apc/proc/set_cell(obj/item/cell/new_cell)
 	if(cell)
-		UnregisterSignal(cell, COMSIG_PARENT_QDELETING)
+		UnregisterSignal(cell, COMSIG_QDELETING)
 	cell = new_cell
 	if(cell)
-		RegisterSignal(cell, COMSIG_PARENT_QDELETING, PROC_REF(on_cell_deletion))
+		RegisterSignal(cell, COMSIG_QDELETING, PROC_REF(on_cell_deletion))
 
 
 ///Called by the deletion of the referenced powercell.
@@ -216,6 +221,7 @@
 	if(!update)
 		return
 
+	set_light(0)
 	overlays.Cut()
 
 	if(update & 1)
@@ -238,6 +244,15 @@
 			overlays += mutable_appearance(icon, "apco1-[operating ? lighting : 0]")
 			overlays += emissive_appearance(icon, "apco2-[operating ? environ : 0]")
 			overlays += mutable_appearance(icon, "apco2-[operating ? environ : 0]")
+
+			switch(charging)
+				if(APC_NOT_CHARGING)
+					set_light_color(LIGHT_COLOR_RED)
+				if(APC_CHARGING)
+					set_light_color(LIGHT_COLOR_BLUE)
+				if(APC_FULLY_CHARGED)
+					set_light_color(LIGHT_COLOR_GREEN)
+			set_light(initial(light_range))
 
 /obj/machinery/power/apc/proc/check_updates()
 
@@ -332,6 +347,9 @@
 		wires.cut_all()
 		update_icon()
 		visible_message(span_danger("\The [src]'s wires snap apart in a rain of sparks!"), null, null, 5)
+		if(X.client)
+			var/datum/personal_statistics/personal_statistics = GLOB.personal_statistics_list[X.ckey]
+			personal_statistics.apcs_slashed++
 	else
 		beenhit += 1
 
@@ -998,20 +1016,27 @@
 		if(EXPLODE_DEVASTATE)
 			cell?.ex_act(1) //More lags woohoo
 			qdel(src)
+			return
 		if(EXPLODE_HEAVY)
 			if(prob(50))
 				return
 			set_broken()
 			if(!cell || prob(50))
 				return
-			cell.ex_act(2)
 		if(EXPLODE_LIGHT)
 			if(prob(75))
 				return
 			set_broken()
 			if(!cell || prob(75))
 				return
-			cell.ex_act(3)
+		if(EXPLODE_WEAK)
+			if(prob(80))
+				return
+			set_broken()
+			if(!cell || prob(85))
+				return
+
+	cell.ex_act(severity)
 
 
 /obj/machinery/power/apc/proc/set_broken()

@@ -18,7 +18,12 @@
 
 /mob/living/carbon/xenomorph/spiderling/Initialize(mapload, mob/living/carbon/xenomorph/spidermother)
 	. = ..()
-	AddComponent(/datum/component/ai_controller, /datum/ai_behavior/spiderling, spidermother)
+	if(spidermother)
+		AddComponent(/datum/component/ai_controller, /datum/ai_behavior/spiderling, spidermother)
+		transfer_to_hive(spidermother.get_xeno_hivenumber())
+	else
+		AddComponent(/datum/component/ai_controller, /datum/ai_behavior/xeno)
+
 
 /mob/living/carbon/xenomorph/spiderling/on_death()
 	///We QDEL them as cleanup and preventing them from being sold
@@ -37,12 +42,14 @@
 /datum/ai_behavior/spiderling/New(loc, parent_to_assign, escorted_atom, can_heal = FALSE)
 	. = ..()
 	default_escorted_atom = WEAKREF(escorted_atom)
-	RegisterSignal(escorted_atom, COMSIG_XENOMORPH_ATTACK_LIVING, PROC_REF(go_to_target))
+	RegisterSignals(escorted_atom, list(COMSIG_XENOMORPH_ATTACK_LIVING, COMSIG_XENOMORPH_ATTACK_HOSTILE_XENOMORPH), PROC_REF(go_to_target))
 	RegisterSignal(escorted_atom, COMSIG_XENOMORPH_ATTACK_OBJ, PROC_REF(go_to_obj_target))
 	RegisterSignal(escorted_atom, COMSIG_MOB_DEATH, PROC_REF(spiderling_rage))
 	RegisterSignal(escorted_atom, COMSIG_LIVING_DO_RESIST, PROC_REF(parent_resist))
 	RegisterSignal(escorted_atom, COMSIG_XENOMORPH_RESIN_JELLY_APPLIED, PROC_REF(apply_spiderling_jelly))
-	RegisterSignal(escorted_atom, list(COMSIG_XENOMORPH_REST, COMSIG_XENOMORPH_UNREST), PROC_REF(toggle_rest))
+	RegisterSignal(escorted_atom, COMSIG_XENOMORPH_REST, PROC_REF(start_resting))
+	RegisterSignal(escorted_atom, COMSIG_XENOMORPH_UNREST, PROC_REF(stop_resting))
+	RegisterSignal(escorted_atom, COMSIG_ELEMENT_JUMP_STARTED, PROC_REF(do_jump))
 	RegisterSignal(escorted_atom, COMSIG_SPIDERLING_MARK, PROC_REF(decide_mark))
 
 /// Decides what to do when widow uses spiderling mark ability
@@ -50,7 +57,7 @@
 	SIGNAL_HANDLER
 	if(!A)
 		only_set_escorted_atom()
-		UnregisterSignal(atom_to_walk_to, list(COMSIG_MOB_DEATH, COMSIG_PARENT_QDELETING))
+		UnregisterSignal(atom_to_walk_to, list(COMSIG_MOB_DEATH, COMSIG_QDELETING))
 		atom_to_walk_to = null
 		return
 	if(atom_to_walk_to == A)
@@ -61,7 +68,7 @@
 		return
 	if(isobj(A))
 		var/obj/obj_target = A
-		RegisterSignal(obj_target, COMSIG_PARENT_QDELETING, PROC_REF(only_set_escorted_atom))
+		RegisterSignal(obj_target, COMSIG_QDELETING, PROC_REF(only_set_escorted_atom))
 		go_to_obj_target(source, A)
 		return
 
@@ -103,7 +110,7 @@
 			change_action(ESCORTING_ATOM, escorted_atom)
 			return
 	mob_parent.face_atom(atom_to_walk_to)
-	mob_parent.UnarmedAttack(atom_to_walk_to, mob_parent)
+	addtimer(CALLBACK(mob_parent, TYPE_PROC_REF(/mob, UnarmedAttack), atom_to_walk_to, mob_parent), rand(0.1, 1.5))
 
 /// Check if escorted_atom moves away from the spiderling while it's attacking something, this is to always keep them close to escorted_atom
 /datum/ai_behavior/spiderling/look_for_new_state()
@@ -116,28 +123,30 @@
 	if(action_type == MOVING_TO_ATOM)
 		RegisterSignal(mob_parent, COMSIG_STATE_MAINTAINED_DISTANCE, PROC_REF(attack_target))
 		if(!isobj(atom_to_walk_to))
-			RegisterSignal(atom_to_walk_to, list(COMSIG_MOB_DEATH, COMSIG_PARENT_QDELETING), PROC_REF(look_for_new_state))
+			RegisterSignals(atom_to_walk_to, list(COMSIG_MOB_DEATH, COMSIG_QDELETING), PROC_REF(look_for_new_state))
 	return ..()
 
 /datum/ai_behavior/spiderling/unregister_action_signals(action_type)
 	if(action_type == MOVING_TO_ATOM)
 		UnregisterSignal(mob_parent, COMSIG_STATE_MAINTAINED_DISTANCE)
 		if(!isnull(atom_to_walk_to))
-			UnregisterSignal(atom_to_walk_to, list(COMSIG_MOB_DEATH, COMSIG_PARENT_QDELETING))
+			UnregisterSignal(atom_to_walk_to, list(COMSIG_MOB_DEATH, COMSIG_QDELETING))
 	return ..()
 
 /// This happens when the spiderlings mother dies, they move faster and will attack any nearby marines
 /datum/ai_behavior/spiderling/proc/spiderling_rage()
+	SIGNAL_HANDLER
 	var/mob/living/carbon/xenomorph/spiderling/x = mob_parent
 	var/list/mob/living/carbon/human/possible_victims = list()
-	for(var/mob/living/carbon/human/victim in cheap_get_humans_near(x, SPIDERLING_RAGE_RANGE))
+	for(var/mob/living/victim in get_nearest_target(x, SPIDERLING_RAGE_RANGE))
 		if(victim.stat == DEAD)
 			continue
 		possible_victims += victim
 	if(!length(possible_victims))
 		kill_parent()
 		return
-	x.emote("roar")
+	// Makes the spiderlings roar at slightly different times so they don't stack their roars
+	addtimer(CALLBACK(x, TYPE_PROC_REF(/mob, emote), "roar"), rand(1, 4))
 	change_action(MOVING_TO_ATOM, pick(possible_victims))
 	addtimer(CALLBACK(src, PROC_REF(kill_parent)), 10 SECONDS)
 
@@ -145,7 +154,7 @@
 /datum/ai_behavior/spiderling/proc/triggered_spiderling_rage(mob/M, mob/victim)
 	var/mob/living/carbon/xenomorph/spiderling/x = mob_parent
 	change_action(MOVING_TO_ATOM, victim)
-	x.emote("roar")
+	addtimer(CALLBACK(x, TYPE_PROC_REF(/mob, emote), "roar"), rand(1, 4))
 	addtimer(CALLBACK(src, PROC_REF(kill_parent)), 15 SECONDS)
 
 ///This kills the spiderling
@@ -155,16 +164,28 @@
 
 /// resist when widow does
 /datum/ai_behavior/spiderling/proc/parent_resist()
+	SIGNAL_HANDLER
 	var/mob/living/carbon/xenomorph/spiderling/spiderling_parent = mob_parent
 	spiderling_parent.do_resist()
 
-/// rest and unrest when widow does
-/datum/ai_behavior/spiderling/proc/toggle_rest()
-	var/mob/living/carbon/xenomorph/spiderling/spiderling_parent = mob_parent
-	if(HAS_TRAIT(spiderling_parent, TRAIT_FLOORED))
-		spiderling_parent.set_resting(FALSE)
-	else
-		spiderling_parent.set_resting(TRUE)
+/// rest when widow does
+/datum/ai_behavior/spiderling/proc/start_resting(mob/source)
+	SIGNAL_HANDLER
+	var/mob/living/living = mob_parent
+	living.set_resting(TRUE)
+
+/// stop resting when widow does, plus unbuckle all mobs so the widow won't get stuck
+/datum/ai_behavior/spiderling/proc/stop_resting(mob/source)
+	SIGNAL_HANDLER
+	var/mob/living/living = mob_parent
+	living.set_resting(FALSE)
+	source.unbuckle_all_mobs()
+
+/// Signal handler to make the spiderling jump when widow does
+/datum/ai_behavior/spiderling/proc/do_jump()
+	SIGNAL_HANDLER
+	var/datum/component/jump/jumpy_spider = mob_parent.GetComponent(/datum/component/jump)
+	jumpy_spider.do_jump(mob_parent)
 
 /// Signal handler to apply resin jelly to the spiderling whenever widow gets it
 /datum/ai_behavior/spiderling/proc/apply_spiderling_jelly()

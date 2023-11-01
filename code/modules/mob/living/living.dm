@@ -18,11 +18,17 @@
 
 	handle_drugged()
 	handle_slowdown()
-	handle_stagger()
 
 ///Adjusts our stats based on the auras we've received and care about, then cleans out the list for next tick.
 /mob/living/proc/finish_aura_cycle()
 	received_auras.Cut() //Living, of course, doesn't care about any
+
+///Can we receive this aura? returns bool
+/mob/living/proc/can_receive_aura(aura_type, atom/source, datum/aura_bearer/bearer)
+	SHOULD_CALL_PARENT(TRUE)
+	. = TRUE
+	if(faction != bearer.faction)
+		return FALSE
 
 ///Update what auras we'll receive this life tick if it's either new or stronger than current. aura_type as AURA_ define, strength as number.
 /mob/living/proc/receive_aura(aura_type, strength)
@@ -99,6 +105,8 @@
 	RegisterSignal(src, COMSIG_AURA_FINISHED, PROC_REF(remove_emitted_auras))
 
 /mob/living/Destroy()
+	for(var/datum/status_effect/effect AS in status_effects)
+		qdel(effect)
 	for(var/i in embedded_objects)
 		var/obj/item/embedded = i
 		if(embedded.embedding.embedded_flags & EMBEDDED_DEL_ON_HOLDER_DEL)
@@ -428,6 +436,9 @@
 		return
 	if(!client)
 		return
+	var/mob/mob_to_push = AM
+	if(istype(mob_to_push) && mob_to_push.lying_angle)
+		return
 	now_pushing = TRUE
 	var/dir_to_target = get_dir(src, AM)
 
@@ -448,7 +459,6 @@
 		if(force_push(AM, move_force, dir_to_target, push_anchored))
 			push_anchored = TRUE
 	if(ismob(AM))
-		var/mob/mob_to_push = AM
 		var/atom/movable/mob_buckle = mob_to_push.buckled
 		// If we can't pull them because of what they're buckled to, make sure we can push the thing they're buckled to instead.
 		// If neither are true, we're not pushing anymore.
@@ -471,7 +481,7 @@
 	now_pushing = FALSE
 
 
-/mob/living/throw_at(atom/target, range, speed, thrower, spin, flying = FALSE)
+/mob/living/throw_at(atom/target, range, speed, thrower, spin, flying = FALSE, targetted_throw = TRUE)
 	if(!target)
 		return 0
 	if(pulling && !flying)
@@ -487,16 +497,8 @@
  * range : how far the mob will be thrown, in tile
  * speed : how fast will it fly
  */
-/mob/living/proc/fly_at(atom/target, range, speed, hovering_time)
-	addtimer(CALLBACK(src,PROC_REF(end_flying), layer), hovering_time)
-	layer = FLY_LAYER
-	set_flying(TRUE)
+/mob/living/proc/fly_at(atom/target, range, speed)
 	throw_at(target, range, speed, null, 0, TRUE)
-
-///remove flying flags and reset the sprite layer
-/mob/living/proc/end_flying(init_layer)
-	set_flying(FALSE)
-	layer = init_layer
 
 /mob/living/proc/offer_mob()
 	GLOB.offered_mob_list += src
@@ -588,15 +590,6 @@
 		return
 	else
 		smokecloak_off()
-
-/mob/living/proc/do_jitter_animation(jitteriness)
-	var/amplitude = min(4, (jitteriness/100) + 1)
-	var/pixel_x_diff = rand(-amplitude, amplitude)
-	var/pixel_y_diff = rand(-amplitude/3, amplitude/3)
-	var/final_pixel_x = initial(pixel_x)
-	var/final_pixel_y = initial(pixel_y)
-	animate(src, pixel_x = pixel_x + pixel_x_diff, pixel_y = pixel_y + pixel_y_diff , time = 2, loop = 6)
-	animate(pixel_x = final_pixel_x , pixel_y = final_pixel_y , time = 2)
 
 
 /*
@@ -722,19 +715,6 @@ below 100 is not dizzy
 	return name
 
 
-/mob/living/proc/point_to_atom(atom/A, turf/T)
-	var/turf/tile = get_turf(A)
-	if (!tile)
-		return FALSE
-	var/turf/our_tile = get_turf(src)
-	TIMER_COOLDOWN_START(src, COOLDOWN_POINT, 1 SECONDS)
-	var/obj/visual = new /obj/effect/overlay/temp/point/big(our_tile, 0, invisibility)
-	animate(visual, pixel_x = (tile.x - our_tile.x) * world.icon_size + A.pixel_x, pixel_y = (tile.y - our_tile.y) * world.icon_size + A.pixel_y, time = 1.7, easing = EASE_OUT)
-	visible_message("<b>[src]</b> points to [A]")
-	SEND_SIGNAL(src, COMSIG_POINT_TO_ATOM, A)
-	return TRUE
-
-
 /mob/living/get_photo_description(obj/item/camera/camera)
 	var/holding
 	if(l_hand || r_hand)
@@ -825,7 +805,11 @@ below 100 is not dizzy
 
 
 /mob/living/can_interact_with(datum/D)
-	return D.Adjacent(src)
+	return D == src || D.Adjacent(src)
+
+/mob/living/onTransitZ(old_z, new_z)
+	. = ..()
+	set_jump_component()
 
 /**
  * Changes the inclination angle of a mob, used by humans and others to differentiate between standing up and prone positions.
@@ -895,9 +879,6 @@ below 100 is not dizzy
 	if(wielded_item && (wielded_item.flags_item & WIELDED)) //this segment checks if the item in your hand is twohanded.
 		var/obj/item/weapon/twohanded/offhand/offhand = get_inactive_held_item()
 		if(offhand && (offhand.flags_item & WIELDED))
-			to_chat(src, span_warning("Your other hand is too busy holding \the [offhand.name]"))
-			return
-		else
 			wielded_item.unwield(src) //Get rid of it.
 	hand = !hand
 	SEND_SIGNAL(src, COMSIG_CARBON_SWAPPED_HANDS)
@@ -961,8 +942,6 @@ below 100 is not dizzy
 	if(QDELETED(src))
 		stack_trace("[candidate] was put into a qdeleted mob [src]")
 		return
-	if(stat != DEAD)
-		REMOVE_TRAIT(src, TRAIT_UNDEFIBBABLE, TRAIT_UNDEFIBBABLE)
 	candidate.mind.transfer_to(src, TRUE)
 
 /mob/living/carbon/xenomorph/transfer_mob(mob/candidate)
@@ -973,4 +952,18 @@ below 100 is not dizzy
 
 ///Sets up the jump component for the mob. Proc args can be altered so different mobs have different 'default' jump settings
 /mob/living/proc/set_jump_component(duration = 0.5 SECONDS, cooldown = 1 SECONDS, cost = 8, height = 16, sound = null, flags = JUMP_SHADOW, flags_pass = PASS_LOW_STRUCTURE|PASS_FIRE)
+	var/gravity = get_gravity()
+	if(gravity < 1) //low grav
+		duration *= 2.5 - gravity
+		cooldown *= 2 - gravity
+		cost *= gravity * 0.5
+		height *= 2 - gravity
+		if(gravity <= 0.75)
+			flags_pass |= PASS_DEFENSIVE_STRUCTURE
+	else if(gravity > 1) //high grav
+		duration *= gravity * 0.5
+		cooldown *= gravity
+		cost *= gravity
+		height *= gravity * 0.5
+
 	AddComponent(/datum/component/jump, _jump_duration = duration, _jump_cooldown = cooldown, _stamina_cost = cost, _jump_height = height, _jump_sound = sound, _jump_flags = flags, _jumper_allow_pass_flags = flags_pass)
